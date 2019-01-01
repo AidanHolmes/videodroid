@@ -1,0 +1,52 @@
+swagger: "2.0"
+info:
+  description: VideoDroid API
+  version: "1.0.0"
+  title: VideoDroid API
+consumes:
+  - application/json
+produces:
+  - application/json
+
+basePath: /droid
+
+# Paths supported by the server application
+paths:
+  /range:
+    get:
+      operationId: droid.range
+      tags:
+        - Range
+      summary: Read distance
+      description: Read distance and ranging settings
+      responses:
+        200:
+          description: Successfully read ranging
+          schema:
+            properties:
+              distance:
+                type: integer
+              mode:
+                type: string
+
+    put:
+      operationId: droid.rangemode
+      tags:
+        - Range
+      summary: Set the ranging mode
+      description: Set to low, medium or high
+      parameters:
+        - name: put
+          in: body
+          required: True
+          schema:
+            type: object
+            properties:
+              mode:
+                type: string
+
+      responses:
+        200:
+          description: Successful update of range mode
+        404:
+          description: Invalid mode
