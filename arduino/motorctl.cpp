@@ -11,9 +11,12 @@ States state = cmd ;
 const char *lastcmd = "";
 
 // Pin configuration for Video Droid
+// Left wheels
 const int pin_pwma = 5;
 const int pin_ain1 = 2;
 const int pin_ain2 = 4;
+
+// Right wheels
 const int pin_pwmb = 6;
 const int pin_bin1 = 7;
 const int pin_bin2 = 8;
@@ -21,52 +24,110 @@ const int pin_standby = 11;
 
 void callback_standby(int n)
 {
-  Serial.print("Standby command recevied\r\n");
+  Serial.print("OK: standby\r\n");
   digitalWrite(pin_standby, LOW);
 }
 
 void callback_stop(int n)
 {
-  Serial.print("Stop command recevied: ");
+  Serial.print("OK: stop ");
   Serial.print(n);
   Serial.print("\r\n") ;
+  digitalWrite(pin_standby, HIGH);
   digitalWrite(pin_ain1, HIGH);
   digitalWrite(pin_ain2, HIGH);
   digitalWrite(pin_bin1, HIGH);
   digitalWrite(pin_bin2, HIGH);
   analogWrite(pin_pwma, 0);
   analogWrite(pin_pwmb, 0);
+  digitalWrite(pin_standby, LOW);
 }
 void callback_lstop(int n)
 {
+  Serial.print("OK: left stop ");
+  Serial.print(n);
+  Serial.print("\r\n") ;
+  digitalWrite(pin_standby, HIGH);
   digitalWrite(pin_ain1, HIGH);
   digitalWrite(pin_ain2, HIGH);
   analogWrite(pin_pwma, 0);
 }
 void callback_rstop(int n)
 {
+  Serial.print("OK: right stop ");
+  Serial.print(n);
+  Serial.print("\r\n") ;
+  digitalWrite(pin_standby, HIGH);
   digitalWrite(pin_bin1, HIGH);
   digitalWrite(pin_bin2, HIGH);
   analogWrite(pin_pwmb, 0);
 }
-void callback_lfwd(int n){}
-void callback_rfwd(int n){}
-void callback_lback(int n){}
-void callback_rback(int n){}
+void callback_lfwd(int n)
+{
+  Serial.print("OK: left forward ");
+  Serial.print(n);
+  Serial.print("\r\n") ;
+  digitalWrite(pin_standby, HIGH);
+  digitalWrite(pin_ain1, HIGH);
+  digitalWrite(pin_ain2, LOW);
+  analogWrite(pin_pwma, n);
+}
+void callback_rfwd(int n)
+{
+  Serial.print("OK: right forward ");
+  Serial.print(n);
+  Serial.print("\r\n") ;
+  digitalWrite(pin_standby, HIGH);
+  digitalWrite(pin_bin1, LOW);
+  digitalWrite(pin_bin2, HIGH);
+  analogWrite(pin_pwmb, n);
+}
+void callback_lback(int n)
+{
+  Serial.print("OK: left back ");
+  Serial.print(n);
+  Serial.print("\r\n") ;
+  digitalWrite(pin_standby, HIGH);
+  digitalWrite(pin_bin1, HIGH);
+  digitalWrite(pin_bin2, LOW);
+  analogWrite(pin_pwmb, n);
+}
+void callback_rback(int n)
+{
+  Serial.print("OK: right back ");
+  Serial.print(n);
+  Serial.print("\r\n") ;
+  digitalWrite(pin_standby, HIGH);
+  digitalWrite(pin_bin1, HIGH);
+  digitalWrite(pin_bin2, LOW);
+  analogWrite(pin_pwmb, n);
+}
 void callback_fwd(int n)
 {
-  Serial.print("Forward command received: ") ;
+  Serial.print("OK: forward ") ;
   Serial.print(n);
   Serial.print("\r\n");
   digitalWrite(pin_standby, HIGH);
   digitalWrite(pin_ain1, HIGH);
   digitalWrite(pin_ain2, LOW);
+  digitalWrite(pin_bin1, LOW);
+  digitalWrite(pin_bin2, HIGH);
+  analogWrite(pin_pwma, n);
+  analogWrite(pin_pwmb, n);
+}
+void callback_back(int n)
+{
+  Serial.print("OK: back ");
+  Serial.print(n);
+  Serial.print("\r\n") ;
+  digitalWrite(pin_standby, HIGH);
+  digitalWrite(pin_ain1, LOW);
+  digitalWrite(pin_ain2, HIGH);
   digitalWrite(pin_bin1, HIGH);
   digitalWrite(pin_bin2, LOW);
   analogWrite(pin_pwma, n);
   analogWrite(pin_pwmb, n);
 }
-void callback_back(int n){}
 void callback_lastcmd(int n)
 {
   Serial.println(lastcmd);

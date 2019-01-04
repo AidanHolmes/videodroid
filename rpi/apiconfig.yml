@@ -50,3 +50,43 @@ paths:
           description: Successful update of range mode
         404:
           description: Invalid mode
+
+  /move:
+    put:
+      operationId: droid.move
+      tags:
+        - Move
+      summary: Move the droid
+      description: Issues commands to each drive wheel
+      parameters:
+        - name: put
+          in: body
+          required: True
+          schema:
+            type: object
+            properties:
+              command:
+                type: string
+              speed:
+                type: integer
+      responses:
+        200:
+          description: Successful move command
+        500:
+          description: Cannot issue move commands
+    get:
+      operationId: droid.getmove
+      tags:
+        - Move
+      summary: Get the last move from the droid
+      responses:
+        200:
+          description: Last move command issued
+          schema:
+            properties:
+              command:
+                type: string
+              speed:
+                type: integer
+        500:
+          description: Cannot issue move commands

@@ -1,0 +1,4 @@
+#!/bin/sh
+
+raspivid -t 0 -fps 15 -w 640 -h 480 --inline -b 10000000 -n -o - | nc -lk -p 5001
+
