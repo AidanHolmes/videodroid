@@ -22,6 +22,68 @@ const int pin_bin1 = 7;
 const int pin_bin2 = 8;
 const int pin_standby = 11;
 
+typedef struct {int in1; int in2; int pwm; int high; int low;} wheel;
+wheel left_wheel{.in1 = pin_ain1, .in2 = pin_ain2, .pwm = pin_pwma, .high = HIGH, .low = LOW} ;
+wheel right_wheel{.in1 = pin_bin1, .in2 = pin_bin2, .pwm = pin_pwmb, .high = HIGH, .low = LOW} ;
+bool bwheels_swapped = false ;
+
+void callback_swap_wheels(int n)
+{
+  Serial.print("OK: swapped wheels to ");
+  bwheels_swapped = !bwheels_swapped;
+  if (bwheels_swapped)
+    Serial.print("swapped") ;
+  else
+    Serial.print("normal") ;
+
+  Serial.print("\r\n");
+
+  wheel tmp_wheel = left_wheel;
+  left_wheel = right_wheel;
+  right_wheel = tmp_wheel;
+}
+
+void switch_wheel(wheel *pwheel, bool change)
+{
+  if (change){
+    pwheel->high = LOW;
+    pwheel->low = HIGH;
+  }else{
+    pwheel->high = HIGH;
+    pwheel->low = LOW ;
+  }
+}
+
+void callback_lswitch(int n)
+{
+  bool change = false;
+  const char *modstr = "normal";
+  Serial.print("OK: changing left wheel modifier to ");
+  if (n <= 0){
+    modstr = "reversed";
+    change = true;
+  }
+  Serial.print(modstr);
+  Serial.print("\r\n");
+
+  switch_wheel(&left_wheel, change) ;
+}
+
+void callback_rswitch(int n)
+{
+  bool change = false;
+  const char *modstr = "normal";
+  Serial.print("OK: changing right wheel modifier to ");
+  if (n <= 0){
+    modstr = "reversed";
+    change = true ;
+  }
+  Serial.print(modstr);
+  Serial.print("\r\n");
+
+  switch_wheel(&right_wheel, change) ;
+}
+
 void callback_standby(int n)
 {
   Serial.print("OK: standby\r\n");
@@ -48,9 +110,9 @@ void callback_lstop(int n)
   Serial.print(n);
   Serial.print("\r\n") ;
   digitalWrite(pin_standby, HIGH);
-  digitalWrite(pin_ain1, HIGH);
-  digitalWrite(pin_ain2, HIGH);
-  analogWrite(pin_pwma, 0);
+  digitalWrite(left_wheel.in1, HIGH);
+  digitalWrite(left_wheel.in2, HIGH);
+  analogWrite(left_wheel.pwm, 0);
 }
 void callback_rstop(int n)
 {
@@ -58,9 +120,9 @@ void callback_rstop(int n)
   Serial.print(n);
   Serial.print("\r\n") ;
   digitalWrite(pin_standby, HIGH);
-  digitalWrite(pin_bin1, HIGH);
-  digitalWrite(pin_bin2, HIGH);
-  analogWrite(pin_pwmb, 0);
+  digitalWrite(right_wheel.in1, HIGH);
+  digitalWrite(right_wheel.in2, HIGH);
+  analogWrite(right_wheel.pwm, 0);
 }
 void callback_lfwd(int n)
 {
@@ -68,9 +130,9 @@ void callback_lfwd(int n)
   Serial.print(n);
   Serial.print("\r\n") ;
   digitalWrite(pin_standby, HIGH);
-  digitalWrite(pin_ain1, HIGH);
-  digitalWrite(pin_ain2, LOW);
-  analogWrite(pin_pwma, n);
+  digitalWrite(left_wheel.in1, left_wheel.high);
+  digitalWrite(left_wheel.in2, left_wheel.low);
+  analogWrite(left_wheel.pwm, n);
 }
 void callback_rfwd(int n)
 {
@@ -78,9 +140,9 @@ void callback_rfwd(int n)
   Serial.print(n);
   Serial.print("\r\n") ;
   digitalWrite(pin_standby, HIGH);
-  digitalWrite(pin_bin1, LOW);
-  digitalWrite(pin_bin2, HIGH);
-  analogWrite(pin_pwmb, n);
+  digitalWrite(right_wheel.in1, right_wheel.low);
+  digitalWrite(right_wheel.in2, right_wheel.high);
+  analogWrite(right_wheel.pwm, n);
 }
 void callback_lback(int n)
 {
@@ -88,9 +150,9 @@ void callback_lback(int n)
   Serial.print(n);
   Serial.print("\r\n") ;
   digitalWrite(pin_standby, HIGH);
-  digitalWrite(pin_bin1, HIGH);
-  digitalWrite(pin_bin2, LOW);
-  analogWrite(pin_pwmb, n);
+  digitalWrite(left_wheel.in1, left_wheel.low);
+  digitalWrite(left_wheel.in2, left_wheel.high);
+  analogWrite(left_wheel.pwm, n);
 }
 void callback_rback(int n)
 {
@@ -98,9 +160,9 @@ void callback_rback(int n)
   Serial.print(n);
   Serial.print("\r\n") ;
   digitalWrite(pin_standby, HIGH);
-  digitalWrite(pin_bin1, HIGH);
-  digitalWrite(pin_bin2, LOW);
-  analogWrite(pin_pwmb, n);
+  digitalWrite(right_wheel.in1, right_wheel.high);
+  digitalWrite(right_wheel.in2, right_wheel.low);
+  analogWrite(right_wheel.pwm, n);
 }
 void callback_fwd(int n)
 {
@@ -108,12 +170,12 @@ void callback_fwd(int n)
   Serial.print(n);
   Serial.print("\r\n");
   digitalWrite(pin_standby, HIGH);
-  digitalWrite(pin_ain1, HIGH);
-  digitalWrite(pin_ain2, LOW);
-  digitalWrite(pin_bin1, LOW);
-  digitalWrite(pin_bin2, HIGH);
-  analogWrite(pin_pwma, n);
-  analogWrite(pin_pwmb, n);
+  digitalWrite(left_wheel.in1, left_wheel.high);
+  digitalWrite(left_wheel.in2, left_wheel.low);
+  digitalWrite(right_wheel.in1, right_wheel.low);
+  digitalWrite(right_wheel.in2, right_wheel.high);
+  analogWrite(right_wheel.pwm, n);
+  analogWrite(left_wheel.pwm, n);
 }
 void callback_back(int n)
 {
@@ -121,12 +183,12 @@ void callback_back(int n)
   Serial.print(n);
   Serial.print("\r\n") ;
   digitalWrite(pin_standby, HIGH);
-  digitalWrite(pin_ain1, LOW);
-  digitalWrite(pin_ain2, HIGH);
-  digitalWrite(pin_bin1, HIGH);
-  digitalWrite(pin_bin2, LOW);
-  analogWrite(pin_pwma, n);
-  analogWrite(pin_pwmb, n);
+  digitalWrite(left_wheel.in1, left_wheel.low);
+  digitalWrite(left_wheel.in2, left_wheel.high);
+  digitalWrite(right_wheel.in1, right_wheel.high);
+  digitalWrite(right_wheel.in2, right_wheel.low);
+  analogWrite(right_wheel.pwm, n);
+  analogWrite(left_wheel.pwm, n);
 }
 void callback_lastcmd(int n)
 {
@@ -155,9 +217,15 @@ Command cmd_right_back("rback", &callback_rback) ;
 Command cmd_forward("fwd", &callback_fwd) ;
 // All backwards
 Command cmd_backwards("back", &callback_back) ;
+// Swap wheel inputs
+Command cmd_swap("swap", &callback_swap_wheels) ;
+// Switch left wheel direction
+Command cmd_lswitch("lswitch", &callback_lswitch) ;
+// Switch right wheel direction
+Command cmd_rswitch("rswitch", &callback_rswitch) ;
 
 Command *active_cmds[] = {&cmd_lastcmd, &cmd_stop, &cmd_left_stop, &cmd_right_stop, &cmd_left_fwd, &cmd_right_fwd,
-			  &cmd_left_back, &cmd_right_back, &cmd_forward, &cmd_backwards, &cmd_standby, NULL};
+			    &cmd_left_back, &cmd_right_back, &cmd_forward, &cmd_backwards, &cmd_standby, &cmd_swap, &cmd_lswitch, &cmd_rswitch, NULL};
 
 const int max_pwm_val = 4;
 char pwmval[max_pwm_val];
@@ -176,6 +244,12 @@ void reset_cmd_parser()
   digitalWrite(LED_BUILTIN, LOW);
 }
 
+int last_pin_state1 = HIGH;
+int rotation_count1 = 0 ;
+int last_pin_state2 = HIGH;
+int rotation_count2 = 0 ;
+unsigned long t = 0;
+
 void setup()
 {
   Serial.begin(9600);
@@ -191,14 +265,32 @@ void setup()
   pinMode(pin_pwmb, OUTPUT);
   pinMode(pin_bin1, OUTPUT);
   pinMode(pin_bin2, OUTPUT);
-  pinMode(pin_standby, OUTPUT);  
+  pinMode(pin_standby, OUTPUT);
+
+  pinMode(A1, INPUT_PULLUP);
+  pinMode(A2, INPUT_PULLUP);
 }
 
 void loop()
 {
   int c, val ;
   Command **p ;
-  
+  unsigned long msec ;
+
+  msec = millis() ;
+  if (digitalRead(A1) != last_pin_state1) rotation_count1++ ;
+  if (digitalRead(A2) != last_pin_state2) rotation_count2++ ;
+  if (msec > t + 2000){
+    /*
+    Serial.print("A1 count ");
+    Serial.print(rotation_count1);
+    Serial.print(". A2 count ") ;
+    Serial.print(rotation_count2);
+    Serial.print("\r\n") ;
+    */
+    t = msec;
+  }
+
   if (Serial.available()){
     // Data in serial buffer
     c = Serial.read();

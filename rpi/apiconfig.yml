@@ -90,3 +90,23 @@ paths:
                 type: integer
         500:
           description: Cannot issue move commands
+
+  /lights:
+    put:
+      operationId: droid.leds
+      tags:
+        - Lights
+      summary: Control the droid lights
+      description: Turn on and off the lights on droid
+      parameters:
+        - name: put
+          in: body
+          required: True
+          schema:
+            type: object
+            properties:
+              turnon:
+                type: integer
+      responses:
+        200:
+          description: Light change successful

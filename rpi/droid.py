@@ -3,7 +3,9 @@ from flask import abort
 import sys
 import threading
 import serial
+import RPi.GPIO as gpio
 
+led_pin = 18
 serialport = '/dev/serial0'
 
 rangemodes = {"none":0, "short":1, "medium":2, "long":3}
@@ -24,6 +26,17 @@ seriallock.acquire()
 ser = serial.Serial(port=serialport, timeout=2.0, write_timeout=2.0)
 seriallock.release()
 
+gpio.setwarnings(False)
+gpio.setmode(gpio.BCM)
+gpio.setup(led_pin, gpio.OUT)
+
+def leds(put):
+    global led_pin
+    on = True
+    if put['turnon'] <= 0:
+        on = False
+    gpio.output(led_pin, on)
+    
 def range():
     global rngmode
     lock.acquire()
