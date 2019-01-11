@@ -51,6 +51,23 @@ paths:
         404:
           description: Invalid mode
 
+  /battery:
+    get:
+      operationId: droid.battery
+      tags:
+        - Battery
+      summary: Get the battery level
+      description: Get the battery level as a percentage value
+      responses:
+        200:
+          description: Percentage battery level
+          schema:
+            properties:
+              charge:
+                type: integer
+        503:
+          description: Charge information unavailable
+
   /move:
     put:
       operationId: droid.move

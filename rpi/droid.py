@@ -4,6 +4,7 @@ import sys
 import threading
 import serial
 import RPi.GPIO as gpio
+import smbus2
 
 led_pin = 18
 serialport = '/dev/serial0'
@@ -17,6 +18,8 @@ lock = threading.Lock()
 seriallock = threading.Lock()
 
 lock.acquire()
+i2cbus = smbus2.SMBus(1)
+
 tof = VL53L1X.VL53L1X(i2c_bus=1, i2c_address=0x29)
 tof.open() # Initialise the i2c bus and configure the sensor
 tof.start_ranging(rangemodes[rngmode]) # Start ranging, 1 = Short Range, 2 = Medium Range, 3 = Long Range
@@ -30,6 +33,13 @@ gpio.setwarnings(False)
 gpio.setmode(gpio.BCM)
 gpio.setup(led_pin, gpio.OUT)
 
+def battery():
+    global i2cbus
+    with lock:
+        try:
+            return {"charge": i2cbus.read_byte_data(0x36,0x04)}
+        except IOError:
+            abort(503, "Cannot query battery level")
 def leds(put):
     global led_pin
     on = True
@@ -39,57 +49,51 @@ def leds(put):
     
 def range():
     global rngmode
-    lock.acquire()
-    distance = tof.get_distance()
-    lock.release()
+    with lock:
+        distance = tof.get_distance()
     return {"distance":distance, "mode": rngmode}
 
 def rangemode(put):
     mode = put['mode']
     global rngmode
+    global tof
     if mode not in rangemodes:
         abort(404, "Invalid range mode")
 
     rngmode = mode
-    lock.acquire()
 
-    tof.stop_ranging()
-    if rangemodes[mode] > 0:
-        tof.start_ranging(rangemodes[mode])
-
-    lock.release()
+    with lock:
+        tof.stop_ranging()
+        if rangemodes[mode] > 0:
+            tof.start_ranging(rangemodes[mode])
 
 def move(put):
     global ser
     if not ser.is_open:
         # Try to open the port again
-        seriallock.acquire()
-        ser = serial.Serial(port=serialport, timeout=2.0, write_timeout=2.0)
-        seriallock.release()
+        with seriallock:
+            ser = serial.Serial(port=serialport, timeout=2.0, write_timeout=2.0)
         if not ser.is_open:
-          abort(500, "Serial comms port unavailable")
+            abort(500, "Serial comms port unavailable")
 
     serial_command = put['command'] + " " + str(put['speed']) + "\r\n"
     bytestr = serial_command.encode('ascii')
-    seriallock.acquire()
-    ser.write(bytestr)
-    response = ser.readline()
-    seriallock.release()
+    with seriallock:
+        ser.write(bytestr)
+        response = ser.readline()
 
 def getmove():
     global ser
     if not ser.is_open:
         # Try to open the port again
-        seriallock.acquire()
-        ser = serial.Serial(port=serialport, timeout=2.0, write_timeout=2.0)
-        seriallock.release()
+        with seriallock:
+            ser = serial.Serial(port=serialport, timeout=2.0, write_timeout=2.0)
         if not ser.is_open:
           abort(500, "Serial comms port unavailable")
 
-    seriallock.acquire()
-    ser.write(b'cmd\r\n')
-    response = ser.readline().strip()
-    seriallock.release()
+    with seriallock:
+        ser.write(b'cmd\r\n')
+        response = ser.readline().strip()
 
     # TO DO: implement cmd with last set speed
     return {"command": response, "speed": 255}
