@@ -1,8 +1,8 @@
 import pygame
 from gamestate import GameState
 from videoport import ExternalView
-from sensors import RangeSensor, Lights, Drive
-from pgcontrol import ControlWnd
+from sensors import RangeSensor, Lights, Drive, Battery
+from pgcontrol import ControlWnd, Clock
 
 class TextDisplay(ControlWnd):
   def __init__(self, text="", **args):
@@ -104,8 +104,35 @@ class DroidImgButton(DroidButton):
       self.screen.blit(self._imageactive, (0,0))
     else:
       self.screen.blit(self._image, (0,0))
-    
 
+class BatteryIndicator(object):
+  def __init__(self, sensor=None, screen=None, wndpos=None):
+    self._sensor = sensor
+    self._wndpos = wndpos.copy()
+    self._screen = screen # Does not manage a separate surface to enable alpha blitting
+    self._battclock = Clock(timeout=60) # 60 second poll of battery
+    self._batteryimages= [(100,self.load_img("batt100.png")),
+                          (75,self.load_img("batt75.png")),
+                          (50,self.load_img("batt50.png")),
+                          (25,self.load_img("batt25.png")),
+                          (10,self.load_img("battempty.png")),
+                          (3,self.load_img("battlow.png"))]
+    self._charge = 100
+    self._currimg = self._batteryimages[4][1]
+    
+  def load_img(self, imgname):
+    return pygame.transform.smoothscale(pygame.image.load(imgname).convert_alpha(), self._wndpos.size)
+    
+  def draw(self):
+    if self._battclock.tick():
+      self._charge = self._sensor.charge()
+      for val, img in self._batteryimages:
+        if self._charge <= val:
+          self._currimg = img
+        else:
+          break
+    self._screen.blit(self._currimg, self._wndpos)
+      
 class Cockpit(GameState, ControlWnd):
   def __init__(self, **args):
     ControlWnd.__init__(self, **args)
@@ -114,6 +141,9 @@ class Cockpit(GameState, ControlWnd):
     self._rangesensor = RangeSensor()
     self._lights = Lights()
     self._drive = Drive()
+    self._battery = Battery()
+    self._batteryserviceavailable = True
+    
     # use state change to update the address and port
     self._apiport = None 
     self._address = None
@@ -148,6 +178,8 @@ class Cockpit(GameState, ControlWnd):
     self._rngdnbtn = DroidImgButton(wndpos=pos, statename="range_down", image="btndnnorm.png", imageactive="btndnactive.png")
     self._rngdnbtn.set_toggle(False)
     self.add_control(self._rngdnbtn)
+    
+    self._batterydisplay = BatteryIndicator(sensor=self._battery, screen=self.screen, wndpos=pygame.Rect(pos.left, pos.bottom + 20*self._scaling[1], 30*self._scaling[0], 16*self._scaling[1]))
     
     pos = pygame.Rect(pos.left-(65*self._scaling[0]), pos.bottom - (34 * self._scaling[1]), 60*self._scaling[0], 20*self._scaling[1])
     self._rangetxt = TextDisplay(wndpos=pos, text=RangeSensor.MODES[self._rangemode])
@@ -201,6 +233,9 @@ class Cockpit(GameState, ControlWnd):
       self._rangesensor.mode=RangeSensor.MODES[self._rangemode]
       self._lights.open(addressinfo[0], addressinfo[1]) 
       self._drive.open(addressinfo[0], addressinfo[1])
+      self._battery.open(addressinfo[0], addressinfo[1])
+      if not self._battery.is_available():
+        self._batteryserviceavailable = False
     
   def state_change(self, param, value):
     # Callback for any state changes
@@ -336,6 +371,11 @@ class Cockpit(GameState, ControlWnd):
     for ctl in self._controls:
       ctl.draw()
       self.screen.blit(ctl.screen, ctl.get_rect())
+      
+    # Draw the battery indicator.
+    # This blits direct to the screen surface, no additional blit required
+    if self._batteryserviceavailable:
+      self._batterydisplay.draw()
       
     if self.get_state("ranging_ctrl"):
       self.draw_hud()

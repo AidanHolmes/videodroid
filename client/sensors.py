@@ -27,6 +27,51 @@ class Lights(object):
     except requests.exceptions.ConnectionError:
       # Failed to connect. 
       print("DEBUG - move API error, cannot connect")
+      
+class Battery(object):
+  def __init__(self, address=None, port=5000):
+    self._address = address
+    self._port = port
+    self._apiurl = ""
+    if address is not None:
+      self.open(address, port)
+      
+  def open(self, address, port=5000):
+    if len(self._apiurl) > 0:
+      # Already open. Close and update URL
+      self.close()
+    self._apiurl = "http://" + address + ":" + str(port) + "/droid/battery"
+    
+  def is_available(self):
+    # Query the droid and check response code
+    # 503 returned if charge hardware unavailable
+    try:
+      r = requests.get(self._apiurl)
+      if r.status_code == requests.codes.ok:
+        return True
+      else:
+        print ("DEBUG - battery query failed: {}".format(r.status_code))
+    except requests.exceptions.ConnectionError:
+      # Failed to connect.
+      print("DEBUG - battery API error, cannot connect")
+      
+    return False
+    
+  def charge(self):
+    # Query the droid for battery charge information
+    charge = 0
+    try:
+      r = requests.get(self._apiurl)
+      if r.status_code == requests.codes.ok:
+        vals = r.json() 
+        charge = vals['charge']
+      else:
+        print ("DEBUG - battery query failed: {}".format(r.status_code))
+    except requests.exceptions.ConnectionError:
+      # Failed to connect.
+      print("DEBUG - battery API error, cannot connect")
+
+    return charge
     
 class Drive(object):
   def __init__(self, address=None, port=5000):

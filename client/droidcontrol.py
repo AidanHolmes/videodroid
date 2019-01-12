@@ -119,7 +119,7 @@ if __name__ == '__main__':
   parser.add_argument('address', type=str, help='IP or hostname', metavar='IP')
   args = parser.parse_args()
   print ("Connecting to " + args.address + "...")
-  app = DroidControl(fullscreen=False, scaletofit=True)
+  app = DroidControl(fullscreen=True, scaletofit=True)
   app.open(args.address)
   app.run()
       

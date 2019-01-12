@@ -1,4 +1,5 @@
 import pygame
+import time
 
 class Clock(object):
   def __init__(self, timeout = None, fn=None, immediate=True):
