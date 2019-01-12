@@ -148,7 +148,7 @@ class Cockpit(GameState, ControlWnd):
     self._apiport = None 
     self._address = None
     self._image = pygame.image.load("cockpit.png").convert_alpha()
-    self._scaling = (self._wndpos.width / self._image.get_width(), self._wndpos.height / self._image.get_height())
+    self._scaling = (float(self._wndpos.width) / float(self._image.get_width()), float(self._wndpos.height) / float(self._image.get_height()))
     self._image = pygame.transform.smoothscale(self._image, self._wndpos.size)
     self._movecontrols = []
     self._rangemode = 0
